@@ -1,0 +1,135 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>MONITOR CAJA ELECTRICA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font: 13px Helvetica, Arial;
+        }
+
+
+        ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        li {
+            padding: 5px 10px;
+            margin: 5px;
+            border: 1px solid darkgrey;
+            cursor: pointer;
+        }
+
+        li.error {
+            background: orangered !important;
+            color: white
+        }
+
+        li span {
+            margin-right: 5px;
+            font-weight: 900;
+        }
+
+        li.agregado {
+            color: black
+        }
+
+        #I li:nth-child(odd),
+        #E li:nth-child(odd) {
+            background: grey;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1 class="text-center">MUESTREO</h1>
+        <div class="row">
+            <div class="col">
+                <h4 class="text-center">Interior</h4>
+                <ul id="I"></ul>
+            </div>
+            <div class="col">
+                <h4 class="text-center">Exterior</h4>
+                <ul id="E"></ul>
+            </div>
+        </div>
+    </div>
+</body>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+    crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+    integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+    crossorigin="anonymous"></script>
+<script>
+    function filtro(texto) {
+        var lista = $("#E li").hide()
+            .filter(function () {
+                var item = $(this).text();
+                var padrao = new RegExp(texto, "i");
+
+                return padrao.test(item);
+            }).closest("li").show();
+    }
+    var socket = io();
+    $(function () {
+        var socket = io();
+        socket.on('records', function (msg) {
+            console.log($('li').length)
+            console.log(msg.length)
+            if ($('li').length > 0) {
+                console.log(Date())
+                if (msg.length > $('li').length) {
+                    nr = msg.slice(0, msg.length - $('li').length)
+                    console.log(msg.length - $('li').length)
+                    nr.forEach(muestra => {
+                        var classError = ""
+                        console.log('cargar nuevo registro')
+                        console.log(muestra)
+                        if (!muestra.State) {
+                            classError = 'error'
+                        }
+                        var hora = new Date(muestra.Cdate).toLocaleTimeString('en-AR', { timeZone: 'UTC' })
+                        if (muestra.Equipo == 'I') {
+                            $('#I').prepend($('<li class="' + classError + '"><span>' + hora + '</span>' + muestra.serial + '</li>').hide().fadeIn(2000));
+                        } else {
+                            $('#E').prepend($('<li class="' + classError + '"><span>' + hora + '</span>' + muestra.serial + '</li>').hide().fadeIn(2000));
+                        }
+
+                    });
+                }
+            } else {
+                console.log('cargar todos registro')
+                $('ul').empty()
+                msg.forEach(muestra => {
+                    if (!muestra.State) {
+                        var classError = 'error'
+                    }
+                    var hora = new Date(muestra.Cdate).toLocaleTimeString('en-AR', { timeZone: 'UTC' })
+                    if (muestra.Equipo == 'I') {
+                        $('#I').append($('<li class="' + classError + '"><span>' + hora + '</span>' + muestra.serial + '</li>'));
+                    } else {
+                        $('#E').append($('<li class="' + classError + '"><span>' + hora + '</span>' + muestra.serial + '</li>'));
+                    }
+
+                });
+            }
+
+        });
+    });
+</script>
+
+</html>
